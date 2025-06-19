@@ -1,33 +1,32 @@
-using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace lab04
 {
-    partial class LoginForm
+    partial class LoginForm : Form
     {
         /// <summary>
-        /// Required designer variable.
+        /// Kontener komponentów używany do czyszczenia zasobów.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
         /// <summary>
-        /// Clean up any resources being used.
+        /// Zwolnij zasoby używane przez formularz.
         /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        /// <param name="disposing">true, jeśli zarządzane zasoby powinny być zwolnione; w przeciwnym razie false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing && components != null)
             {
                 components.Dispose();
             }
+
             base.Dispose(disposing);
         }
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             lblLogin = new Label();
@@ -122,6 +121,7 @@ namespace lab04
             ResumeLayout(false);
             PerformLayout();
         }
+
         #endregion
 
         private System.Windows.Forms.Label lblLogin;
