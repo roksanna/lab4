@@ -12,9 +12,6 @@ namespace lab04
     {
         public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
@@ -23,64 +20,71 @@ namespace lab04
 
             var services = new ServiceCollection();
             ConfigureServices(services);
+
             ServiceProvider = services.BuildServiceProvider();
-            
-            // Aplikacja kliencka nie powinna tworzyć bazy danych ani migracji.
-            // Migracje powinny być stosowane przed uruchomieniem aplikacji klienckiej.
+
             try
             {
-                // Sprawdź połączenie z bazą danych
-                var dbContext = ServiceProvider.GetRequiredService<DatabaseContext>();
-                if (!dbContext.Database.CanConnect())
-                {
-                    Console.WriteLine("Database connection failed. Please check your connection string.");
-                    MessageBox.Show($"Błąd połączenia z bazą danych", "Błąd",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Environment.Exit(1);
-                }
-                dbContext.Database.EnsureCreated();
-                var userService = ServiceProvider.GetRequiredService<UserService>();
-                if (!dbContext.Users.Any(u => u.Login == "admin"))
-                {
-                    var admin = new Data.Models.User
-                    {
-                        Password = "admin",
-                        Email = "admin@admin.com",
-                        FirstName = "Admin",
-                        LastName = "Admin",
-                        Login = "admin",
-                        Permissions = 0,
-                    };
-                    userService.AddUser(admin, out _);
-                }
+                InitializeDatabase();
 
                 var loginForm = ServiceProvider.GetRequiredService<LoginForm>();
                 Application.Run(loginForm);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Błąd: {ex.Message}", "Błąd",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ShowErrorAndExit($"Wystąpił błąd uruchamiania aplikacji:\n{ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Metoda konfigurująca usługi aplikacji, wykorzystując dependency injection. Dodając singletony usług.
-        /// </summary>
-        /// <param name="services"></param>
         private static void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DatabaseContext>(options => options.UseInMemoryDatabase("WydarzeniaDb"));
+            services.AddDbContext<DatabaseContext>(options =>
+                options.UseInMemoryDatabase("WydarzeniaDb"));
 
-            // Rejestracja usług
+            // Usługi aplikacji
             services.AddScoped<UserService>();
             services.AddScoped<EventService>();
             services.AddScoped<RegistrationService>();
 
-            // Rejestracja formularzy
+            // Formularze
             services.AddTransient<LoginForm>();
             services.AddTransient<RegisterForm>();
             services.AddTransient<AdminManageUsersForm>();
+        }
+
+        private static void InitializeDatabase()
+        {
+            var dbContext = ServiceProvider.GetRequiredService<DatabaseContext>();
+
+            if (!dbContext.Database.CanConnect())
+            {
+                ShowErrorAndExit("Nie można połączyć się z bazą danych.");
+            }
+
+            dbContext.Database.EnsureCreated();
+
+            var userService = ServiceProvider.GetRequiredService<UserService>();
+
+            if (!dbContext.Users.Any(u => u.Login == "admin"))
+            {
+                var admin = new User
+                {
+                    Login = "admin",
+                    Password = "admin",
+                    Email = "admin@admin.com",
+                    FirstName = "Admin",
+                    LastName = "Admin",
+                    Permissions = 0
+                };
+
+                userService.AddUser(admin, out _);
+            }
+        }
+
+        private static void ShowErrorAndExit(string message)
+        {
+            MessageBox.Show(message, "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Environment.Exit(1);
         }
     }
 }
